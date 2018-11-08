@@ -107,8 +107,27 @@ def draw_diagonal(ax):
     ax.plot([0, 1], [0, 1], transform=ax.transAxes, color='black', alpha=0.5)
 
 
-def plot_cdf(ax, data, **kwargs):
-    data = deepcopy(data)
-    data.sort()
-    y = np.arange(len(data)) / float(len(data))
-    return ax.plot(data, y, **kwargs)
+def plot_cdf(ax, data, **kw_args):
+    data_copy = deepcopy(data)
+    data_copy.sort()
+    
+    # Large data, many duplicate points -> Slow to graph. Dedup here.
+    x = list(set(data_copy))
+    x.sort()
+    y = []
+    xiter = iter(x)
+    xx = next(xiter)
+    for i, dd in enumerate(data_copy):
+        if dd > xx:
+            xx = next(xiter)
+            y.append(i/float(len(data_copy)))  # would be i-1 for one-based arrays
+    y.append(1.0)
+    
+    # Add start and double points strategically for nice plotting
+    x = [x[0]] + 2*x
+    x.sort()
+    y = [0.0] + [yy for tup in zip(y[:-1], y[1:]) for yy in tup] + [y[-1]]*2
+    
+    ax.plot(x, y, **kw_args)
+
+
